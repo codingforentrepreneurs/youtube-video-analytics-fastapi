@@ -3,6 +3,8 @@ from typing import Union
 
 from fastapi import FastAPI
 
+from api.video_events.routing import router as video_events_router
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -13,7 +15,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-# app.include_router(event_router, prefix='/api/events')
+app.include_router(video_events_router, prefix='/api/video-events')
 # /api/events
 
 
