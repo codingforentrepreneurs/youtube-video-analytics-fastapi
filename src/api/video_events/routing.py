@@ -1,16 +1,8 @@
-from typing import Optional
-from pydantic import BaseModel, Field
 from fastapi import APIRouter, Request
 
-router = APIRouter()
+from .models import YouTubePlayerState
 
-class YouTubePlayerState(BaseModel):
-    is_ready: bool
-    video_id: str
-    video_title: str
-    current_time: float
-    video_state_label: str
-    video_state_value: int
+router = APIRouter()
 
 @router.post("/") # /api/video-events/
 def create_video_event(request: Request, payload: YouTubePlayerState):
