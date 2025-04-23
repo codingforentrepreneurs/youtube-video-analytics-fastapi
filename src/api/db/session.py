@@ -1,5 +1,7 @@
 import os
 import sqlmodel
+import timescaledb
+from timescaledb import create_engine
 from sqlmodel import SQLModel, Session
 
 
@@ -8,13 +10,14 @@ if DATABASE_URL == "":
     raise NotImplementedError("DATABASE_URL needs to be set")
 
 
-engine = sqlmodel.create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL, timezone="UTC")
 
 
 def init_db():
     # create database times
     # print("creating db")
     SQLModel.metadata.create_all(engine)
+    timescaledb.metadata.create_all(engine)
 
 
 

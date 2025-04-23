@@ -19,8 +19,8 @@ services:
         - action: rebuild
           path: compose.yaml
   db_service:
-    # image: timescale/timescaledb:latest-pg17
-    image: postgres:17.4
+    image: timescale/timescaledb:latest-pg17
+    # image: postgres:17.4
     environment:
       - POSTGRES_USER=time-user
       - POSTGRES_PASSWORD=time-pw
