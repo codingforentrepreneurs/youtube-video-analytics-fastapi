@@ -1,3 +1,4 @@
+from typing import List
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Request, Depends
@@ -11,7 +12,12 @@ from timescaledb.utils import get_utc_now
 from api.db.session import get_session
 from api.watch_sessions.models import WatchSession
 
-from .models import YouTubePlayerState, YouTubeWatchEvent, YouTubeWatchEventResponseModel
+from .models import (
+    YouTubePlayerState, 
+    YouTubeWatchEvent, 
+    YouTubeWatchEventResponseModel,
+    VideoStat
+)
 
 router = APIRouter()
 
@@ -46,19 +52,22 @@ def create_video_event(
     return obj
 
 
-@router.get("/{video_id}")
+@router.get("/{video_id}", response_model=List[VideoStat])
 def get_video_stats(
         video_id:str,
         db_session: Session = Depends(get_session)  
     ):
-    bucket = time_bucket("1 minute", YouTubeWatchEvent.time)
+    bucket = time_bucket("1 day", YouTubeWatchEvent.time)
     start = datetime.now(timezone.utc) - timedelta(hours=25)
-    end = datetime.now(timezone.utc) - timedelta(hours=1)
+    end = datetime.now(timezone.utc) - timedelta(seconds=1)
     query = (
         select(
             bucket, # 0
             YouTubeWatchEvent.video_id, # 1
-            func.count().label("total_events") # 2
+            func.count().label("total_events"), # 2
+            func.max(YouTubeWatchEvent.current_time).label("max_viewership"),
+            func.avg(YouTubeWatchEvent.current_time).label("avg_viewership"),
+            func.count(func.distinct(YouTubeWatchEvent.watch_session_id)).label("unique_views")
         )
         .where(
             YouTubeWatchEvent.time > start,
@@ -76,6 +85,13 @@ def get_video_stats(
 
     )
     results = db_session.exec(query).fetchall()
-    results = [(str(x[0]), str(x[1]), str(x[2]) ) for x in results]
-    print(results)
+    results = [
+        VideoStat(
+        time=x[0],
+        video_id=x[1],
+        total_events=x[2],
+        max_viewership=x[3],
+        avg_viewership=x[4],
+        unique_views=x[5],
+    ) for x in results]
     return results

@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional
 
 from timescaledb import TimescaleModel
+from pydantic import BaseModel, Field as PydanticField
 from sqlmodel import SQLModel, Field
 
 
@@ -40,3 +41,13 @@ class YouTubeWatchEventResponseModel(SQLModel, table=False):
     video_id: str = Field(index=True)
     current_time: float
     time: datetime
+
+
+
+class VideoStat(BaseModel):
+    time: datetime
+    video_id: str
+    total_events: int
+    max_viewership: Optional[float] = PydanticField(default=-1)
+    avg_viewership: Optional[float] = PydanticField(default=-1)
+    unique_views: Optional[int] = PydanticField(default=-1)
