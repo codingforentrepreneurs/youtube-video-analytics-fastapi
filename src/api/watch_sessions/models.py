@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Optional
 
 from timescaledb import TimescaleModel
+from timescaledb.utils import get_utc_now
 from sqlmodel import SQLModel, Field
 
 def generate_session_id():
@@ -15,6 +16,7 @@ class WatchSession(TimescaleModel, table=True):
     path: Optional[str]  = Field(default="", index=True)
     referer: Optional[str] = Field(default="", index=True)
     video_id: Optional[str] = Field(default="", index=True)
+    last_active: Optional[datetime] = Field(default_factory=get_utc_now)
 
     # timescaledb config
     __chunk_time_interval__ = "INTERVAL 30 days"
