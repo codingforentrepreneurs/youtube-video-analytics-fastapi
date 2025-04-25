@@ -1,7 +1,7 @@
 from typing import List
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Depends, HTTPException
 
 from sqlalchemy import func
 from sqlmodel import Session, select
@@ -9,6 +9,7 @@ from sqlmodel import Session, select
 from timescaledb.hyperfunctions import time_bucket
 from timescaledb.utils import get_utc_now
 
+from api.utils import parse_int_or_fallback
 from api.db.session import get_session
 from api.watch_sessions.models import WatchSession
 
@@ -52,14 +53,21 @@ def create_video_event(
     return obj
 
 
+
+
 @router.get("/{video_id}", response_model=List[VideoStat])
 def get_video_stats(
         video_id:str,
+        request: Request,
         db_session: Session = Depends(get_session)  
     ):
-    bucket = time_bucket("1 day", YouTubeWatchEvent.time)
-    start = datetime.now(timezone.utc) - timedelta(hours=25)
-    end = datetime.now(timezone.utc) - timedelta(seconds=1)
+    params = request.query_params
+    bucket_param = params.get("bucket") or "1 day"
+    bucket = time_bucket(bucket_param, YouTubeWatchEvent.time)
+    hours_ago = parse_int_or_fallback(params.get("hours-ago"), fallback=25)
+    hours_until = parse_int_or_fallback(params.get("hours-until"), fallback=0)
+    start = datetime.now(timezone.utc) - timedelta(hours=hours_ago)
+    end = datetime.now(timezone.utc) - timedelta(hours=hours_until)
     query = (
         select(
             bucket, # 0
@@ -84,7 +92,13 @@ def get_video_stats(
         )
 
     )
-    results = db_session.exec(query).fetchall()
+    try:
+        results = db_session.exec(query).fetchall()
+    except:
+        raise HTTPException(
+            status_code=400,
+            detail='Invalid query'
+        )
     results = [
         VideoStat(
         time=x[0],
