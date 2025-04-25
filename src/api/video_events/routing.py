@@ -64,7 +64,7 @@ def get_video_stats(
     params = request.query_params
     bucket_param = params.get("bucket") or "1 day"
     bucket = time_bucket(bucket_param, YouTubeWatchEvent.time)
-    hours_ago = parse_int_or_fallback(params.get("hours-ago"), fallback=25)
+    hours_ago = parse_int_or_fallback(params.get("hours-ago"), fallback=24 * 31 * 3)
     hours_until = parse_int_or_fallback(params.get("hours-until"), fallback=0)
     start = datetime.now(timezone.utc) - timedelta(hours=hours_ago)
     end = datetime.now(timezone.utc) - timedelta(hours=hours_until)
