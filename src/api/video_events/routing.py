@@ -73,13 +73,14 @@ def get_video_stats(
             bucket, # 0
             YouTubeWatchEvent.video_id, # 1
             func.count().label("total_events"), # 2
-            func.max(YouTubeWatchEvent.current_time).label("max_viewership"),
-            func.avg(YouTubeWatchEvent.current_time).label("avg_viewership"),
+            func.max(YouTubeWatchEvent.current_time).label("max_viewership"), # in seconds
+            func.avg(YouTubeWatchEvent.current_time).label("avg_viewership"), # in seconds
             func.count(func.distinct(YouTubeWatchEvent.watch_session_id)).label("unique_views")
         )
         .where(
             YouTubeWatchEvent.time > start,
             YouTubeWatchEvent.time <= end,
+            YouTubeWatchEvent.video_state_label != "CUED",
             YouTubeWatchEvent.video_id == video_id
         )
         .group_by(
@@ -87,7 +88,7 @@ def get_video_stats(
             YouTubeWatchEvent.video_id
         )
         .order_by(
-            bucket,
+            bucket.desc(),
             YouTubeWatchEvent.video_id
         )
 
